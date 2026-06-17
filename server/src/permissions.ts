@@ -7,6 +7,7 @@ export const MODULES = [
   "specialists",
   "financial",
   "reports",
+  "pipeline",
   "users",
   "settings",
 ] as const;
@@ -64,12 +65,32 @@ export const PROJECT_MANAGER_PERMS: PermissionSet = {
       specialists: full(),
       financial: crud(true, true, false),
       reports: viewOnly(),
+      pipeline: viewOnly(),
       users: none(),
       settings: none(),
     },
     none()
   ),
   flags: { viewProfits: true, viewSpecialistCosts: true, onlyAssignedProjects: false, manageBackups: false },
+};
+
+// فريق المبيعات - خطوط الأنابيب والعملاء
+export const SALES_PERMS: PermissionSet = {
+  modules: buildModules(
+    {
+      dashboard: viewOnly(),
+      projects: viewOnly(),
+      clients: crud(true, true, false),
+      specialists: none(),
+      financial: none(),
+      reports: viewOnly(),
+      pipeline: full(),
+      users: none(),
+      settings: none(),
+    },
+    none()
+  ),
+  flags: { viewProfits: false, viewSpecialistCosts: false, onlyAssignedProjects: false, manageBackups: false },
 };
 
 // خدمة العملاء - العملاء والمشاريع وإضافة الملاحظات بدون رؤية التكاليف والأرباح
@@ -149,6 +170,7 @@ export const DEFAULT_ROLES: {
     isSystem: true,
   },
   { name: "accountant", nameAr: "المحاسب", description: "الإدارة المالية", permissions: ACCOUNTANT_PERMS, isSystem: true },
+  { name: "sales", nameAr: "مندوب المبيعات", description: "إدارة خطوط الأنابيب والفرص البيعية", permissions: SALES_PERMS, isSystem: true },
   { name: "specialist", nameAr: "المختص", description: "متابعة المهام المسندة", permissions: SPECIALIST_PERMS, isSystem: true },
 ];
 

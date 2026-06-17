@@ -74,6 +74,7 @@ async function main() {
     { name: "مدير المشاريع", username: "manager", role: "project_manager", email: "manager@example.com" },
     { name: "موظف خدمة العملاء", username: "service", role: "client_service", email: "service@example.com" },
     { name: "المحاسب", username: "accountant", role: "accountant", email: "accountant@example.com" },
+    { name: "مندوب المبيعات", username: "sales", role: "sales", email: "sales@example.com" },
   ];
   for (const u of users) {
     await prisma.user.upsert({
@@ -174,6 +175,22 @@ async function main() {
     await prisma.expense.create({ data: { type: "أدوات وبرامج", amount: 200, note: "اشتراك برنامج تصميم", projectId: p1.id } });
 
     console.log("✅ تمت إضافة بيانات تجريبية");
+  }
+
+  // فرص بيعية تجريبية (خطوط الأنابيب) - مستقلة عن المشاريع
+  if ((await prisma.lead.count()) === 0) {
+    const salesUser = await prisma.user.findUnique({ where: { username: "sales" } });
+    const sampleLeads = [
+      { title: "مشروع تخرج - هندسة", clientName: "عبدالله الشمري", phone: "0501234567", source: "إعلان", value: 4500, stage: "new" },
+      { title: "بحث ماجستير - إدارة", clientName: "ريم الدوسري", phone: "0537654321", source: "توصية", value: 8000, stage: "contacted" },
+      { title: "تطبيق جوال", clientName: "شركة نماء", phone: "0551112222", source: "موقع الكتروني", value: 25000, stage: "proposal" },
+      { title: "عرض تقديمي تسويقي", clientName: "خالد العنزي", phone: "0509998888", source: "إنستغرام", value: 1500, stage: "negotiation" },
+      { title: "ترجمة كتاب", clientName: "منى السبيعي", phone: "0544443333", source: "توصية", value: 3000, stage: "won" },
+    ];
+    for (const l of sampleLeads) {
+      await prisma.lead.create({ data: { ...l, ownerId: salesUser?.id } });
+    }
+    console.log("✅ تمت إضافة فرص بيعية تجريبية");
   }
 
   console.log("✅ اكتملت التهيئة");

@@ -17,8 +17,11 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err?.response?.status === 401) {
+      const onPublic = location.pathname.startsWith("/p/");
+      const hadToken = !!localStorage.getItem("token");
       localStorage.removeItem("token");
-      if (!location.pathname.startsWith("/login")) {
+      // أعد التوجيه فقط إذا انتهت جلسة فعلية ولسنا على صفحة عامة
+      if (hadToken && !onPublic && !location.pathname.startsWith("/login")) {
         location.href = "/login";
       }
     }

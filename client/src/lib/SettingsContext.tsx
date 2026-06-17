@@ -39,6 +39,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    // لا نطلب الإعدادات على الصفحات العامة أو قبل تسجيل الدخول
+    if (location.pathname.startsWith("/p/") || !localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get("/settings");
       if (res.data?.org) {

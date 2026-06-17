@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { to: "/specialists", label: "المختصون", icon: "specialists", module: "specialists" },
   { to: "/financial", label: "المالية", icon: "financial", module: "financial" },
   { to: "/invoices", label: "الفواتير", icon: "file", module: "financial" },
+  { to: "/pipeline", label: "خطوط الأنابيب", icon: "trendUp", module: "pipeline" },
   { to: "/reports", label: "التقارير", icon: "reports", module: "reports" },
 ];
 

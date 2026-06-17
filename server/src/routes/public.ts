@@ -29,7 +29,7 @@ router.get(
       include: {
         client: { select: { name: true } },
         payments: true,
-        specialists: true,
+        specialists: { include: { specialist: { select: { name: true } } } },
         expenses: true,
         files: { where: { category: { in: ["client", "general"] } }, orderBy: { createdAt: "desc" } },
         projectNotes: { where: { type: { not: "internal" } }, orderBy: { createdAt: "desc" } },
@@ -54,6 +54,14 @@ router.get(
     }
 
     const statusIndex = PROJECT_STATUSES.indexOf(project.status as any);
+
+    // سجل تحديثات آمن (إجراءات لا تكشف بيانات داخلية)
+    const SAFE_ACTIONS = ["create_project", "change_status", "add_note", "client_payment"];
+    const logs = await prisma.activityLog.findMany({
+      where: { projectId: project.id, action: { in: SAFE_ACTIONS } },
+      orderBy: { createdAt: "desc" },
+      take: 15,
+    });
 
     res.json({
       org: { name: org.name, logo: org.logo, phone: org.phone, email: org.email, currency: org.currency },
@@ -87,6 +95,13 @@ router.get(
         .map((p) => ({ id: p.id, amount: p.amount, date: p.date, method: p.method, note: p.note })),
       notes: project.projectNotes.map((n) => ({ id: n.id, text: n.text, createdAt: n.createdAt })),
       files: project.files.map((f) => ({ id: f.id, name: f.name, category: f.category, size: f.size, createdAt: f.createdAt })),
+      team: project.specialists.map((s) => ({ name: s.specialist?.name, role: s.role || "عضو فريق" })),
+      timeline: logs.map((l) => ({ action: l.action, description: l.description, createdAt: l.createdAt })),
+      stats: {
+        paymentsCount: project.payments.filter((p) => p.type === "client_in").length,
+        filesCount: project.files.length,
+        teamCount: project.specialists.length,
+      },
     });
   })
 );

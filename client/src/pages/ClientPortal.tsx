@@ -39,11 +39,22 @@ export default function ClientPortal() {
       </div>
     );
 
-  const { org, project: p, finance, payments, notes, files } = data;
+  const { org, project: p, finance, payments, notes, files, team = [], timeline = [] } = data;
   const cur = finance.currency || "ر.س";
   const fmt = (n: number) => `${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${cur}`;
   const currentIdx = p.statusIndex;
   const paidPct = finance.value > 0 ? Math.min(100, Math.round((finance.paid / finance.value) * 100)) : 0;
+
+  const daysLeft = p.deliveryDate && !p.completedAt
+    ? Math.ceil((new Date(p.deliveryDate).getTime() - Date.now()) / 86400000)
+    : null;
+
+  const ACTION_LABEL: Record<string, { label: string; icon: any; tone: string }> = {
+    create_project: { label: "تم إنشاء المشروع", icon: "sparkles", tone: "bg-brand-50 text-brand-600" },
+    change_status: { label: "تحديث الحالة", icon: "activity", tone: "bg-blue-50 text-blue-600" },
+    add_note: { label: "ملاحظة جديدة", icon: "note", tone: "bg-amber-50 text-amber-600" },
+    client_payment: { label: "دفعة مستلمة", icon: "money", tone: "bg-emerald-50 text-emerald-600" },
+  };
 
   const download = async (id: number, name: string) => {
     const res = await api.get(`/public/projects/${token}/files/${id}/download`, { responseType: "blob" });
@@ -93,6 +104,14 @@ export default function ClientPortal() {
           <div className="w-full bg-ink-100 rounded-full h-2.5 overflow-hidden">
             <div className="bg-brand-gradient h-2.5 rounded-full transition-all duration-700" style={{ width: `${p.progress}%` }} />
           </div>
+          {daysLeft !== null && (
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <span className={`badge ${daysLeft < 0 ? "bg-red-50 text-red-600" : daysLeft <= 3 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"}`}>
+                <Icon name="clock" size={13} />
+                {daysLeft < 0 ? `متأخر ${Math.abs(daysLeft)} يوم` : daysLeft === 0 ? "موعد التسليم اليوم" : `${daysLeft} يوم حتى التسليم`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Timeline */}
@@ -195,6 +214,49 @@ export default function ClientPortal() {
                   <button className="btn-secondary btn-sm" onClick={() => download(f.id, f.name)}><Icon name="download" size={15} /> تنزيل</button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Team */}
+        {team.length > 0 && (
+          <div className="card p-6">
+            <h2 className="font-bold text-ink-800 mb-4 flex items-center gap-2"><Icon name="specialists" size={18} className="text-brand-600" /> فريق العمل</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {team.map((m: any, i: number) => (
+                <div key={i} className="flex items-center gap-3 border border-ink-100 rounded-xl p-3">
+                  <div className="h-10 w-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold">{m.name?.charAt(0) || "؟"}</div>
+                  <div>
+                    <div className="font-semibold text-ink-800">{m.name || "عضو فريق"}</div>
+                    <div className="text-xs text-ink-500">{m.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Updates timeline */}
+        {timeline.length > 0 && (
+          <div className="card p-6">
+            <h2 className="font-bold text-ink-800 mb-4 flex items-center gap-2"><Icon name="activity" size={18} className="text-brand-600" /> سجل التحديثات</h2>
+            <div className="space-y-4">
+              {timeline.map((t: any, i: number) => {
+                const meta = ACTION_LABEL[t.action] || { label: t.action, icon: "activity", tone: "bg-ink-100 text-ink-500" };
+                return (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.tone}`}><Icon name={meta.icon} size={16} /></div>
+                      {i < timeline.length - 1 && <div className="w-px flex-1 bg-ink-100 my-1" />}
+                    </div>
+                    <div className="pb-1">
+                      <div className="text-sm font-semibold text-ink-800">{meta.label}</div>
+                      <div className="text-sm text-ink-600">{t.description}</div>
+                      <div className="text-xs text-ink-400 mt-0.5">{formatDateTime(t.createdAt)}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -32,6 +32,8 @@ model User {
   files        FileAttachment[]
   notes        Note[]
   invoices     Invoice[]
+  leads        Lead[]
+  leadNotes    LeadNote[]
 }
 
 // الأدوار والصلاحيات
@@ -235,6 +237,39 @@ model ActivityLog {
   projectId   Int?
   description String
   createdAt   DateTime @default(now())
+}
+
+// خطوط الأنابيب - الصفقات/الفرص البيعية (CRM للمبيعات)
+model Lead {
+  id                 Int       @id @default(autoincrement())
+  title              String
+  clientName         String
+  phone              String?
+  email              String?
+  source             String?   // مصدر الفرصة
+  value              Float     @default(0) // القيمة المتوقعة
+  stage              String    @default("new") // new|contacted|qualified|proposal|negotiation|won|lost
+  expectedCloseDate  DateTime?
+  notes              String?
+  lostReason         String?
+  ownerId            Int?
+  owner              User?     @relation(fields: [ownerId], references: [id])
+  convertedClientId  Int?
+  convertedProjectId Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  leadNotes          LeadNote[]
+}
+
+model LeadNote {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  text      String
+  type      String   @default("note") // note | call | meeting | email
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 // القوائم القابلة للإعداد (أنواع الخدمات، التخصصات، المهارات...)

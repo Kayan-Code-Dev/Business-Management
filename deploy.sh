@@ -9,9 +9,11 @@ echo "==> App dir: $APP_DIR"
 echo "==> Building server..."
 cd "$APP_DIR/server"
 npm install --no-audit --no-fund
-npx prisma generate
+  npx prisma generate
   npx prisma db push --skip-generate --accept-data-loss
-npm run build
+  # تحديث الأدوار والصلاحيات والقوائم (idempotent - لا يمسح بيانات ولا يغيّر كلمات المرور)
+  npm run seed
+  npm run build
 
 echo "==> Building client..."
 cd "$APP_DIR/client"

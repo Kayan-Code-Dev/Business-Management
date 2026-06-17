@@ -17,6 +17,7 @@ import SpecialistDetail from "./pages/SpecialistDetail";
 import Financial from "./pages/Financial";
 import Invoices from "./pages/Invoices";
 import InvoiceView from "./pages/InvoiceView";
+import Pipeline from "./pages/Pipeline";
 import Reports from "./pages/Reports";
 import Activity from "./pages/Activity";
 import Users from "./pages/Users";
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/financial" element={<Guard module="financial"><Financial /></Guard>} />
         <Route path="/invoices" element={<Guard module="financial"><Invoices /></Guard>} />
         <Route path="/invoices/:id" element={<Guard module="financial"><InvoiceView /></Guard>} />
+        <Route path="/pipeline" element={<Guard module="pipeline"><Pipeline /></Guard>} />
         <Route path="/reports" element={<Guard module="reports"><Reports /></Guard>} />
         <Route path="/activity" element={<Guard><Activity /></Guard>} />
         <Route path="/users" element={<Guard module="users"><Users /></Guard>} />
