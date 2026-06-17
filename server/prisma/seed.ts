@@ -193,6 +193,66 @@ async function main() {
     console.log("✅ تمت إضافة فرص بيعية تجريبية");
   }
 
+  // المحاسبة: خزنة افتراضية + ترحيل الحركات الموجودة (idempotent)
+  let treasury = await prisma.treasury.findFirst({ where: { isDefault: true } });
+  if (!treasury) treasury = await prisma.treasury.findFirst({ orderBy: { id: "asc" } });
+  if (!treasury) {
+    treasury = await prisma.treasury.create({ data: { name: "الخزنة الرئيسية", type: "cash", isDefault: true } });
+    console.log("✅ تم إنشاء الخزنة الرئيسية");
+  }
+
+  // ترحيل دفعات العملاء/المختصين التي ليس لها حركة خزنة
+  const payments = await prisma.payment.findMany({
+    include: { project: { select: { projectNumber: true } }, client: { select: { name: true } }, specialist: { select: { name: true } } },
+  });
+  let backfilled = 0;
+  for (const p of payments) {
+    const exists = await prisma.transaction.findFirst({ where: { paymentId: p.id } });
+    if (exists) continue;
+    const isIn = p.type === "client_in";
+    await prisma.transaction.create({
+      data: {
+        treasuryId: treasury.id,
+        direction: isIn ? "in" : "out",
+        category: isIn ? "client_payment" : "specialist_payment",
+        counterAccount: isIn ? "إيرادات العملاء" : "مستحقات المختصين",
+        amount: p.amount,
+        date: p.date,
+        description: isIn
+          ? `دفعة عميل - ${p.project?.projectNumber || ""} - ${p.client?.name || ""}`
+          : `دفعة لمختص - ${p.specialist?.name || ""} - ${p.project?.projectNumber || ""}`,
+        projectId: p.projectId,
+        clientId: p.clientId,
+        specialistId: p.specialistId,
+        paymentId: p.id,
+        createdById: p.createdById,
+      },
+    });
+    backfilled++;
+  }
+  // ترحيل المصروفات
+  const expenses = await prisma.expense.findMany();
+  for (const e of expenses) {
+    const exists = await prisma.transaction.findFirst({ where: { expenseId: e.id } });
+    if (exists) continue;
+    await prisma.transaction.create({
+      data: {
+        treasuryId: treasury.id,
+        direction: "out",
+        category: "expense",
+        counterAccount: "مصروفات تشغيلية",
+        amount: e.amount,
+        date: e.date,
+        description: `مصروف${e.type ? " - " + e.type : ""}${e.note ? " - " + e.note : ""}`,
+        projectId: e.projectId,
+        expenseId: e.id,
+        createdById: e.createdById,
+      },
+    });
+    backfilled++;
+  }
+  if (backfilled > 0) console.log(`✅ تم ترحيل ${backfilled} حركة إلى الخزنة`);
+
   console.log("✅ اكتملت التهيئة");
   console.log("بيانات الدخول: admin / 123456 (وكذلك manager, service, accountant, specialist بكلمة 123456)");
 }

@@ -15,6 +15,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Specialists from "./pages/Specialists";
 import SpecialistDetail from "./pages/SpecialistDetail";
 import Financial from "./pages/Financial";
+import Accounting from "./pages/Accounting";
 import Invoices from "./pages/Invoices";
 import InvoiceView from "./pages/InvoiceView";
 import Pipeline from "./pages/Pipeline";
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="/specialists" element={<Guard module="specialists"><Specialists /></Guard>} />
         <Route path="/specialists/:id" element={<Guard module="specialists"><SpecialistDetail /></Guard>} />
         <Route path="/financial" element={<Guard module="financial"><Financial /></Guard>} />
+        <Route path="/accounting" element={<Guard module="accounting"><Accounting /></Guard>} />
         <Route path="/invoices" element={<Guard module="financial"><Invoices /></Guard>} />
         <Route path="/invoices/:id" element={<Guard module="financial"><InvoiceView /></Guard>} />
         <Route path="/pipeline" element={<Guard module="pipeline"><Pipeline /></Guard>} />

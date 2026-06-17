@@ -10,6 +10,7 @@ const MODULE_LABELS: Record<string, string> = {
   clients: "العملاء",
   specialists: "المختصون",
   financial: "المالية",
+  accounting: "المحاسبة",
   reports: "التقارير",
   pipeline: "خطوط الأنابيب",
   users: "المستخدمون",

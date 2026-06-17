@@ -4,6 +4,7 @@ import { authenticate, authorize } from "../middleware/auth";
 import { asyncHandler, parseDate, parseNumber } from "../utils/http";
 import { logActivity } from "../utils/activity";
 import { round2, financeFromProject, STATUS_LABELS_AR } from "../utils/finance";
+import { recordTransaction, resolveTreasuryId, COUNTER_ACCOUNTS } from "../utils/treasury";
 
 const router = Router();
 router.use(authenticate);
@@ -101,22 +102,37 @@ router.post(
   "/payments/client",
   authorize("financial", "create"),
   asyncHandler(async (req, res) => {
-    const { projectId, amount, date, method, note } = req.body || {};
+    const { projectId, amount, date, method, note, treasuryId } = req.body || {};
     const amt = parseNumber(amount);
     if (!projectId || !amt || amt <= 0) return res.status(400).json({ message: "المشروع والمبلغ مطلوبان" });
-    const project = await prisma.project.findUnique({ where: { id: Number(projectId) } });
+    const project = await prisma.project.findUnique({ where: { id: Number(projectId) }, include: { client: { select: { name: true } } } });
     if (!project) return res.status(404).json({ message: "المشروع غير موجود" });
+    const payDate = parseDate(date) || new Date();
     const payment = await prisma.payment.create({
       data: {
         type: "client_in",
         amount: amt,
-        date: parseDate(date) || new Date(),
+        date: payDate,
         method,
         note,
         projectId: project.id,
         clientId: project.clientId,
         createdById: req.user!.id,
       },
+    });
+    const tId = await resolveTreasuryId(treasuryId ? Number(treasuryId) : null);
+    await recordTransaction({
+      treasuryId: tId,
+      direction: "in",
+      category: "client_payment",
+      counterAccount: COUNTER_ACCOUNTS.client_payment,
+      amount: amt,
+      date: payDate,
+      description: `دفعة عميل - ${project.projectNumber} - ${project.client?.name || ""}`,
+      projectId: project.id,
+      clientId: project.clientId,
+      paymentId: payment.id,
+      createdById: req.user!.id,
     });
     await logActivity({
       userId: req.user!.id,
@@ -135,7 +151,7 @@ router.post(
   "/payments/specialist",
   authorize("financial", "create"),
   asyncHandler(async (req, res) => {
-    const { projectId, specialistId, amount, date, method, note } = req.body || {};
+    const { projectId, specialistId, amount, date, method, note, treasuryId } = req.body || {};
     const amt = parseNumber(amount);
     if (!projectId || !specialistId || !amt || amt <= 0)
       return res.status(400).json({ message: "المشروع والمختص والمبلغ مطلوبة" });
@@ -143,17 +159,32 @@ router.post(
     if (!project) return res.status(404).json({ message: "المشروع غير موجود" });
     const specialist = await prisma.specialist.findUnique({ where: { id: Number(specialistId) } });
     if (!specialist) return res.status(404).json({ message: "المختص غير موجود" });
+    const payDate = parseDate(date) || new Date();
     const payment = await prisma.payment.create({
       data: {
         type: "specialist_out",
         amount: amt,
-        date: parseDate(date) || new Date(),
+        date: payDate,
         method,
         note,
         projectId: project.id,
         specialistId: specialist.id,
         createdById: req.user!.id,
       },
+    });
+    const tId = await resolveTreasuryId(treasuryId ? Number(treasuryId) : null);
+    await recordTransaction({
+      treasuryId: tId,
+      direction: "out",
+      category: "specialist_payment",
+      counterAccount: COUNTER_ACCOUNTS.specialist_payment,
+      amount: amt,
+      date: payDate,
+      description: `دفعة لمختص - ${specialist.name} - ${project.projectNumber}`,
+      projectId: project.id,
+      specialistId: specialist.id,
+      paymentId: payment.id,
+      createdById: req.user!.id,
     });
     await logActivity({
       userId: req.user!.id,
@@ -174,6 +205,7 @@ router.delete(
     const id = Number(req.params.id);
     const payment = await prisma.payment.findUnique({ where: { id } });
     if (!payment) return res.status(404).json({ message: "الدفعة غير موجودة" });
+    await prisma.transaction.deleteMany({ where: { paymentId: id } });
     await prisma.payment.delete({ where: { id } });
     await logActivity({
       userId: req.user!.id,
@@ -263,18 +295,32 @@ router.post(
   "/expenses",
   authorize("financial", "create"),
   asyncHandler(async (req, res) => {
-    const { type, amount, date, note, projectId } = req.body || {};
+    const { type, amount, date, note, projectId, treasuryId } = req.body || {};
     const amt = parseNumber(amount);
     if (!amt || amt <= 0) return res.status(400).json({ message: "المبلغ مطلوب" });
+    const expDate = parseDate(date) || new Date();
     const expense = await prisma.expense.create({
       data: {
         type,
         amount: amt,
-        date: parseDate(date) || new Date(),
+        date: expDate,
         note,
         projectId: projectId ? Number(projectId) : null,
         createdById: req.user!.id,
       },
+    });
+    const tId = await resolveTreasuryId(treasuryId ? Number(treasuryId) : null);
+    await recordTransaction({
+      treasuryId: tId,
+      direction: "out",
+      category: "expense",
+      counterAccount: COUNTER_ACCOUNTS.expense,
+      amount: amt,
+      date: expDate,
+      description: `مصروف${type ? " - " + type : ""}${note ? " - " + note : ""}`,
+      projectId: expense.projectId,
+      expenseId: expense.id,
+      createdById: req.user!.id,
     });
     await logActivity({
       userId: req.user!.id,
@@ -295,6 +341,7 @@ router.delete(
     const id = Number(req.params.id);
     const expense = await prisma.expense.findUnique({ where: { id } });
     if (!expense) return res.status(404).json({ message: "المصروف غير موجود" });
+    await prisma.transaction.deleteMany({ where: { expenseId: id } });
     await prisma.expense.delete({ where: { id } });
     await logActivity({
       userId: req.user!.id,

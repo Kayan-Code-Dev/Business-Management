@@ -19,6 +19,7 @@ import lookupRoutes from "./routes/lookups";
 import settingsRoutes from "./routes/settings";
 import invoiceRoutes from "./routes/invoices";
 import leadRoutes from "./routes/leads";
+import accountingRoutes from "./routes/accounting";
 import publicRoutes from "./routes/public";
 
 const app = express();
@@ -53,6 +54,7 @@ app.use("/api/lookups", lookupRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/leads", leadRoutes);
+app.use("/api/accounting", accountingRoutes);
 
 // تقديم واجهة الإنتاج إن وُجدت
 const clientDist = path.resolve(__dirname, "../../client/dist");

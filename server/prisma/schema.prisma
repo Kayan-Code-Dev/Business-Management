@@ -34,6 +34,7 @@ model User {
   invoices     Invoice[]
   leads        Lead[]
   leadNotes    LeadNote[]
+  transactions Transaction[]
 }
 
 // الأدوار والصلاحيات
@@ -237,6 +238,41 @@ model ActivityLog {
   projectId   Int?
   description String
   createdAt   DateTime @default(now())
+}
+
+// المحاسبة: الخزائن والحركات المالية
+model Treasury {
+  id             Int           @id @default(autoincrement())
+  name           String
+  type           String        @default("cash") // cash | bank
+  openingBalance Float         @default(0)
+  isDefault      Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  transactions   Transaction[]
+}
+
+model Transaction {
+  id             Int       @id @default(autoincrement())
+  treasuryId     Int
+  treasury       Treasury  @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+  direction      String    // in | out
+  category       String    // client_payment | specialist_payment | expense | deposit | withdrawal | transfer | other
+  counterAccount String?   // اسم الحساب المقابل (للقيود)
+  amount         Float
+  date           DateTime  @default(now())
+  description    String?
+  projectId      Int?
+  clientId       Int?
+  specialistId   Int?
+  invoiceId      Int?
+  paymentId      Int?
+  expenseId      Int?
+  transferGroup  String?
+  createdById    Int?
+  createdBy      User?     @relation(fields: [createdById], references: [id])
+  createdAt      DateTime  @default(now())
 }
 
 // خطوط الأنابيب - الصفقات/الفرص البيعية (CRM للمبيعات)
