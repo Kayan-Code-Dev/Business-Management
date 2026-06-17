@@ -21,7 +21,7 @@ export default function Users() {
   const [tab, setTab] = useState("users");
   return (
     <div>
-      <PageHeader title="المستخدمون والأدوار" subtitle="إدارة الحسابات والصلاحيات" />
+      <PageHeader title="المستخدمون والأدوار" subtitle="إدارة الحسابات والصلاحيات" icon="users" />
       <div className="flex gap-1 mb-4 border-b border-slate-200">
         <button onClick={() => setTab("users")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === "users" ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500"}`}>المستخدمون</button>
         <button onClick={() => setTab("roles")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === "roles" ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500"}`}>الأدوار والصلاحيات</button>

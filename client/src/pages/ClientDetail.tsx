@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Card, PageHeader, Spinner, StatusBadge, EmptyState } from "../components/ui";
+import { Icon } from "../components/Icon";
 import { money, formatDate } from "../lib/format";
 
 export default function ClientDetail() {
@@ -26,7 +27,8 @@ export default function ClientDetail() {
       <PageHeader
         title={data.name}
         subtitle={`${data.phone || ""} ${data.country ? "· " + data.country : ""}`}
-        actions={<Link to="/clients" className="btn-secondary">رجوع</Link>}
+        icon="clients"
+        actions={<Link to="/clients" className="btn-secondary"><Icon name="chevronRight" size={16} /> رجوع</Link>}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

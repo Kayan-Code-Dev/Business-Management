@@ -25,7 +25,7 @@ export default function Activity() {
 
   return (
     <div>
-      <PageHeader title="سجل النشاطات" subtitle="جميع العمليات المهمة في النظام" />
+      <PageHeader title="سجل النشاطات" subtitle="جميع العمليات المهمة في النظام" icon="activity" />
       <Card className="mb-4">
         <div className="flex gap-2 max-w-md">
           <input className="input" placeholder="بحث في الوصف" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (setPage(1), load())} />

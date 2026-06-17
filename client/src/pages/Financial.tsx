@@ -19,7 +19,7 @@ export default function Financial() {
 
   return (
     <div>
-      <PageHeader title="المالية" subtitle="الوضع المالي والمدفوعات والمستحقات" />
+      <PageHeader title="المالية" subtitle="الوضع المالي والمدفوعات والمستحقات" icon="financial" />
       <div className="flex gap-1 mb-4 border-b border-slate-200 overflow-x-auto no-print">
         {TABS.map((t) => (
           <button
@@ -53,13 +53,13 @@ function Overview() {
   return (
     <div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <StatCard title="إجمالي قيمة المشاريع" value={money(s.totalValue)} icon="💼" tone="brand" />
-        <StatCard title="المحصّل" value={money(s.totalClientPaid)} icon="💵" tone="green" />
-        <StatCard title="غير المحصّل" value={money(s.totalUncollected)} icon="🧾" tone="red" />
-        <StatCard title="مستحقات المختصين" value={money(s.totalSpecialistDue)} icon="👷" tone="amber" />
-        <StatCard title="المصروفات" value={money(s.totalExpenses)} icon="💸" tone="amber" />
-        <StatCard title="صافي الربح" value={money(s.totalNetProfit)} icon="📈" tone="green" />
-        <StatCard title="مشاريع غير مسددة" value={s.unsettledCount} icon="⚠️" tone="red" />
+        <StatCard title="إجمالي قيمة المشاريع" value={money(s.totalValue)} icon="briefcase" tone="brand" />
+        <StatCard title="المحصّل" value={money(s.totalClientPaid)} icon="money" tone="green" />
+        <StatCard title="غير المحصّل" value={money(s.totalUncollected)} icon="alert" tone="red" />
+        <StatCard title="مستحقات المختصين" value={money(s.totalSpecialistDue)} icon="wallet" tone="amber" />
+        <StatCard title="المصروفات" value={money(s.totalExpenses)} icon="trendUp" tone="amber" />
+        <StatCard title="صافي الربح" value={money(s.totalNetProfit)} icon="trendUp" tone="green" />
+        <StatCard title="مشاريع غير مسددة" value={s.unsettledCount} icon="clock" tone="red" />
       </div>
       <Card>
         <h3 className="font-bold text-slate-800 mb-3">الجدول المالي للمشاريع</h3>

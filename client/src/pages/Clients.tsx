@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, apiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { PageHeader, Card, Spinner, EmptyState, Modal, Field } from "../components/ui";
+import { Icon } from "../components/Icon";
 import { money } from "../lib/format";
 
 export default function Clients() {
@@ -30,10 +31,11 @@ export default function Clients() {
       <PageHeader
         title="العملاء"
         subtitle="إدارة العملاء وأرصدتهم"
+        icon="clients"
         actions={
           can("clients", "create") && (
             <button className="btn-primary" onClick={() => setShowAdd(true)}>
-              + عميل جديد
+              <Icon name="plus" size={18} /> عميل جديد
             </button>
           )
         }

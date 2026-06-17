@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { PageHeader, Card, Spinner, StatCard, EmptyState } from "../components/ui";
+import { Icon } from "../components/Icon";
 import { money } from "../lib/format";
 
 const PERIODS = [
@@ -53,10 +54,11 @@ export default function Reports() {
       <PageHeader
         title="التقارير"
         subtitle={data ? `الفترة: ${data.range.label}` : "تقارير تشغيلية ومالية"}
+        icon="reports"
         actions={
           <>
-            <button className="btn-secondary" onClick={() => window.print()}>طباعة / PDF</button>
-            <button className="btn-primary" onClick={exportExcel}>تصدير Excel</button>
+            <button className="btn-secondary" onClick={() => window.print()}><Icon name="print" size={16} /> طباعة / PDF</button>
+            <button className="btn-primary" onClick={exportExcel}><Icon name="excel" size={16} /> تصدير Excel</button>
           </>
         }
       />

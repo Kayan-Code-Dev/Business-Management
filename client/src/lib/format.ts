@@ -23,16 +23,16 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   return d.toLocaleString("ar-EG", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-export const STATUS_META: Record<string, { label: string; color: string }> = {
-  new: { label: "جديد", color: "bg-slate-100 text-slate-700" },
-  specialist_assigned: { label: "تم تعيين المختص", color: "bg-indigo-100 text-indigo-700" },
-  in_progress: { label: "قيد التنفيذ", color: "bg-blue-100 text-blue-700" },
-  first_delivery: { label: "التسليم الأول", color: "bg-cyan-100 text-cyan-700" },
-  revisions: { label: "تعديلات", color: "bg-amber-100 text-amber-700" },
-  final_delivery: { label: "التسليم النهائي", color: "bg-teal-100 text-teal-700" },
-  completed: { label: "مكتمل", color: "bg-green-100 text-green-700" },
-  cancelled: { label: "ملغي", color: "bg-slate-200 text-slate-600" },
-  late: { label: "متأخر", color: "bg-red-100 text-red-700" },
+export const STATUS_META: Record<string, { label: string; color: string; dot: string; accent: string }> = {
+  new: { label: "جديد", color: "bg-ink-100 text-ink-600", dot: "bg-ink-400", accent: "border-ink-300" },
+  specialist_assigned: { label: "تم تعيين المختص", color: "bg-indigo-50 text-indigo-700", dot: "bg-indigo-500", accent: "border-indigo-400" },
+  in_progress: { label: "قيد التنفيذ", color: "bg-blue-50 text-blue-700", dot: "bg-blue-500", accent: "border-blue-400" },
+  first_delivery: { label: "التسليم الأول", color: "bg-cyan-50 text-cyan-700", dot: "bg-cyan-500", accent: "border-cyan-400" },
+  revisions: { label: "تعديلات", color: "bg-amber-50 text-amber-700", dot: "bg-amber-500", accent: "border-amber-400" },
+  final_delivery: { label: "التسليم النهائي", color: "bg-teal-50 text-teal-700", dot: "bg-teal-500", accent: "border-teal-400" },
+  completed: { label: "مكتمل", color: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500", accent: "border-emerald-400" },
+  cancelled: { label: "ملغي", color: "bg-ink-200 text-ink-600", dot: "bg-ink-400", accent: "border-ink-300" },
+  late: { label: "متأخر", color: "bg-red-50 text-red-700", dot: "bg-red-500", accent: "border-red-400" },
 };
 
 export const PROJECT_STATUS_FLOW = [

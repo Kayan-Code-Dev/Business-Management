@@ -62,7 +62,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="الإعدادات" subtitle="إعدادات المؤسسة والقوائم والنظام" />
+      <PageHeader title="الإعدادات" subtitle="إعدادات المؤسسة والقوائم والنظام" icon="settings" />
 
       {msg && <div className="mb-4 rounded-lg bg-green-50 text-green-700 text-sm px-3 py-2">{msg}</div>}
 

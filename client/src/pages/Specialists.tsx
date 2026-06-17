@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, apiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { PageHeader, Card, Spinner, EmptyState, Modal, Field } from "../components/ui";
+import { Icon } from "../components/Icon";
 import { money } from "../lib/format";
 
 export default function Specialists() {
@@ -30,7 +31,8 @@ export default function Specialists() {
       <PageHeader
         title="المختصون"
         subtitle="إدارة المختصين ومستحقاتهم"
-        actions={can("specialists", "create") && <button className="btn-primary" onClick={() => setShowAdd(true)}>+ مختص جديد</button>}
+        icon="specialists"
+        actions={can("specialists", "create") && <button className="btn-primary" onClick={() => setShowAdd(true)}><Icon name="plus" size={18} /> مختص جديد</button>}
       />
       <Card className="mb-4">
         <div className="flex gap-2 max-w-md">
