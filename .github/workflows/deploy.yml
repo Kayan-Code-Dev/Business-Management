@@ -1,0 +1,52 @@
+name: Deploy to server
+
+on:
+  push:
+    branches:
+      - main
+      - cursor/build-project-management-system-2af1
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment tarball
+        run: |
+          tar czf pm-deploy.tar.gz \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude='*.db' \
+            --exclude='*.db-journal' \
+            --exclude=.env \
+            --exclude=uploads \
+            server client package.json README.md deploy.sh
+
+      - name: Copy tarball to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: pm-deploy.tar.gz
+          target: /tmp
+
+      - name: Extract and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            mkdir -p /var/www/pm-business-management
+            tar xzf /tmp/pm-deploy.tar.gz -C /var/www/pm-business-management
+            bash /var/www/pm-business-management/deploy.sh
+            rm -f /tmp/pm-deploy.tar.gz
