@@ -1,0 +1,218 @@
+// نظام إدارة المشاريع الأكاديمية/الخدمية - مخطط قاعدة البيانات
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// المستخدمون
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  username     String    @unique
+  email        String?
+  phone        String?
+  passwordHash String
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  roleId       Int
+  role         Role      @relation(fields: [roleId], references: [id])
+  // ربط اختياري بين المستخدم وسجل المختص
+  specialistId Int?      @unique
+  specialist   Specialist? @relation(fields: [specialistId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  activities   ActivityLog[]
+  payments     Payment[]
+  expenses     Expense[]
+  files        FileAttachment[]
+  notes        Note[]
+}
+
+// الأدوار والصلاحيات
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // معرّف برمجي: admin, project_manager, ...
+  nameAr      String
+  description String?
+  permissions String   // JSON object للصلاحيات التفصيلية
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+// العملاء
+model Client {
+  id             Int       @id @default(autoincrement())
+  name           String
+  phone          String?
+  country        String?
+  specialization String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  projects       Project[]
+  payments       Payment[]
+}
+
+// المختصون
+model Specialist {
+  id              Int       @id @default(autoincrement())
+  name            String
+  phone           String?
+  email           String?
+  specialization  String?
+  skills          String?   // مهارات (نص/مفصول بفواصل)
+  experienceLevel String?
+  status          String    @default("active")
+  paymentMethod   String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  projectLinks    ProjectSpecialist[]
+  payments        Payment[]
+  user            User?
+}
+
+// المشاريع
+model Project {
+  id            Int       @id @default(autoincrement())
+  projectNumber String    @unique
+  title         String
+  serviceType   String?
+  status        String    @default("new")
+  progress      Int       @default(0)
+  value         Float     @default(0) // قيمة المشروع (المتفق عليه مع العميل)
+  deliveryDate  DateTime?
+  startDate     DateTime  @default(now())
+  completedAt   DateTime?
+  isArchived    Boolean   @default(false)
+  notes         String?
+  clientId      Int
+  client        Client    @relation(fields: [clientId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  specialists   ProjectSpecialist[]
+  payments      Payment[]
+  files         FileAttachment[]
+  projectNotes  Note[]
+  expenses      Expense[]
+}
+
+// ربط المشروع بالمختص
+model ProjectSpecialist {
+  id                  Int        @id @default(autoincrement())
+  projectId           Int
+  project             Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  specialistId        Int
+  specialist          Specialist @relation(fields: [specialistId], references: [id])
+  role                String?
+  cost                Float      @default(0) // التكلفة المتفق عليها مع المختص
+  internalDeliveryDate DateTime?
+  status              String     @default("assigned")
+  createdAt           DateTime   @default(now())
+
+  @@unique([projectId, specialistId])
+}
+
+// الدفعات (من العميل / للمختص)
+model Payment {
+  id           Int        @id @default(autoincrement())
+  type         String     // client_in (دفعة عميل) | specialist_out (دفعة لمختص)
+  amount       Float
+  date         DateTime   @default(now())
+  method       String?
+  note         String?
+  projectId    Int?
+  project      Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  clientId     Int?
+  client       Client?    @relation(fields: [clientId], references: [id])
+  specialistId Int?
+  specialist   Specialist? @relation(fields: [specialistId], references: [id])
+  createdById  Int?
+  createdBy    User?      @relation(fields: [createdById], references: [id])
+  createdAt    DateTime   @default(now())
+}
+
+// المصروفات التشغيلية
+model Expense {
+  id          Int      @id @default(autoincrement())
+  type        String?
+  amount      Float
+  date        DateTime @default(now())
+  note        String?
+  projectId   Int?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdById Int?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// الملفات المرفقة
+model FileAttachment {
+  id           Int      @id @default(autoincrement())
+  projectId    Int
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name         String
+  originalName String
+  storedName   String
+  mimeType     String?
+  size         Int      @default(0)
+  category     String   @default("general") // client | specialist | general
+  uploadedById Int?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+// ملاحظات المشروع
+model Note {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  text      String
+  type      String   @default("general") // general | edit | internal
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// سجل النشاطات
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  entityType  String?
+  entityId    Int?
+  projectId   Int?
+  description String
+  createdAt   DateTime @default(now())
+}
+
+// القوائم القابلة للإعداد (أنواع الخدمات، التخصصات، المهارات...)
+model Lookup {
+  id        Int     @id @default(autoincrement())
+  category  String  // service_type | specialization | skill | experience_level | payment_method | expense_type
+  value     String
+  label     String
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  @@unique([category, value])
+}
+
+// إعدادات عامة key/value (JSON)
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,18 @@
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+
+# server
+server/dev.db
+server/dev.db-journal
+server/uploads/
+server/.env
+
+# client
+client/.env
+client/dist/
+
+# misc
+*.local
