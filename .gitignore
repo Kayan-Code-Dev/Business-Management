@@ -5,10 +5,13 @@ build/
 .DS_Store
 
 # server
-server/dev.db
-server/dev.db-journal
+server/**/dev.db
+server/**/dev.db-journal
 server/uploads/
 server/.env
+
+# build info
+*.tsbuildinfo
 
 # client
 client/.env
