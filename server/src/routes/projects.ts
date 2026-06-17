@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 import { prisma } from "../prisma";
 import { authenticate, authorize } from "../middleware/auth";
 import { asyncHandler, parseDate, parseNumber } from "../utils/http";
@@ -142,6 +143,7 @@ router.get(
       startDate: p.startDate,
       completedAt: p.completedAt,
       isArchived: p.isArchived,
+      publicToken: p.publicToken,
       notes: p.notes,
       client: p.client,
       specialists: p.specialists.map((s) => ({
@@ -448,6 +450,52 @@ router.delete(
       description: `إزالة مختص من المشروع`,
     });
     res.json({ message: "تم الحذف" });
+  })
+);
+
+// إنشاء/تفعيل رابط مشاركة عام للعميل
+router.post(
+  "/:id/share",
+  authorize("projects", "edit"),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ message: "المشروع غير موجود" });
+    let token = project.publicToken;
+    if (!token) {
+      token = crypto.randomBytes(24).toString("hex");
+      await prisma.project.update({ where: { id }, data: { publicToken: token } });
+      await logActivity({
+        userId: req.user!.id,
+        action: "share_project",
+        entityType: "project",
+        entityId: id,
+        projectId: id,
+        description: `تفعيل رابط مشاركة للمشروع ${project.projectNumber}`,
+      });
+    }
+    res.json({ token });
+  })
+);
+
+// إلغاء رابط المشاركة
+router.delete(
+  "/:id/share",
+  authorize("projects", "edit"),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ message: "المشروع غير موجود" });
+    await prisma.project.update({ where: { id }, data: { publicToken: null } });
+    await logActivity({
+      userId: req.user!.id,
+      action: "unshare_project",
+      entityType: "project",
+      entityId: id,
+      projectId: id,
+      description: `إلغاء رابط مشاركة المشروع ${project.projectNumber}`,
+    });
+    res.json({ message: "تم إلغاء الرابط" });
   })
 );
 

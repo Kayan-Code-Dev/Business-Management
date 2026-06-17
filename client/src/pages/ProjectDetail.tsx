@@ -68,6 +68,9 @@ export default function ProjectDetail() {
           </div>
           {canEdit && (
             <div className="flex gap-2 no-print">
+              <button className="btn-secondary" onClick={() => setModal("share")}>
+                <Icon name="user" size={16} /> رابط العميل
+              </button>
               <button className="btn-secondary" onClick={() => setModal("status")}>
                 <Icon name="activity" size={16} /> تغيير الحالة
               </button>
@@ -229,6 +232,7 @@ export default function ProjectDetail() {
         </div>
       </Card>
 
+      {modal === "share" && <ShareModal project={p} onClose={() => setModal(null)} onChanged={load} notify={notify} canEdit={canEdit} />}
       {modal === "status" && <StatusModal project={p} onClose={() => setModal(null)} onSaved={() => { setModal(null); notify("تم تحديث الحالة"); load(); }} />}
       {modal === "specialist" && <AssignSpecialistModal projectId={id!} specialists={specialists} onClose={() => setModal(null)} onSaved={() => { setModal(null); notify("تم التعيين"); load(); }} />}
       {modal === "file" && <UploadFileModal projectId={id!} onClose={() => setModal(null)} onSaved={() => { setModal(null); notify("تم الرفع"); load(); }} />}
@@ -278,6 +282,77 @@ async function downloadFile(fileId: number, name: string) {
   a.download = name;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function ShareModal({ project, onClose, onChanged, notify, canEdit }: any) {
+  const [token, setToken] = useState<string | null>(project.publicToken || null);
+  const [busy, setBusy] = useState(false);
+  const url = token ? `${window.location.origin}/p/${token}` : "";
+
+  const generate = async () => {
+    setBusy(true);
+    try {
+      const res = await api.post(`/projects/${project.id}/share`);
+      setToken(res.data.token);
+      onChanged();
+      notify("تم إنشاء الرابط");
+    } catch (e) {
+      notify(apiError(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const revoke = async () => {
+    if (!confirm("إلغاء الرابط؟ لن يتمكن العميل من الوصول بعدها.")) return;
+    setBusy(true);
+    try {
+      await api.delete(`/projects/${project.id}/share`);
+      setToken(null);
+      onChanged();
+      notify("تم إلغاء الرابط");
+    } catch (e) {
+      notify(apiError(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      notify("تم نسخ الرابط");
+    } catch {
+      notify("انسخ الرابط يدوياً", "info");
+    }
+  };
+
+  return (
+    <Modal open onClose={onClose} title="رابط متابعة العميل" subtitle="شارك هذا الرابط مع العميل لمتابعة مشروعه" size="md">
+      <div className="rounded-xl bg-brand-50 border border-brand-100 p-4 mb-4 text-sm text-brand-800 flex gap-2">
+        <Icon name="eye" size={18} className="shrink-0 mt-0.5" />
+        <span>الرابط يعرض للعميل: حالة المشروع والتقدّم والمواعيد والملخص المالي ودفعاته والملاحظات والملفات الخاصة به فقط — بدون أي بيانات داخلية (تكاليف المختصين أو الأرباح).</span>
+      </div>
+
+      {token ? (
+        <>
+          <Field label="الرابط العام">
+            <div className="flex gap-2">
+              <input className="input text-left ltr" dir="ltr" readOnly value={url} onFocus={(e) => e.target.select()} />
+              <button className="btn-primary shrink-0" onClick={copy}><Icon name="file" size={16} /> نسخ</button>
+            </div>
+          </Field>
+          <div className="flex justify-between gap-2 mt-6">
+            <a href={url} target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="eye" size={16} /> معاينة</a>
+            {canEdit && <button className="btn-ghost text-red-500" onClick={revoke} disabled={busy}><Icon name="trash" size={16} /> إلغاء الرابط</button>}
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-6">
+          <p className="text-ink-500 text-sm mb-4">لا يوجد رابط بعد. أنشئ رابطاً آمناً لمشاركته مع العميل.</p>
+          <button className="btn-primary" onClick={generate} disabled={busy}>{busy ? "..." : "إنشاء رابط المتابعة"}</button>
+        </div>
+      )}
+    </Modal>
+  );
 }
 
 function StatusModal({ project, onClose, onSaved }: any) {

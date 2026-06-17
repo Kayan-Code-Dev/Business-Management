@@ -96,6 +96,7 @@ model Project {
   startDate     DateTime  @default(now())
   completedAt   DateTime?
   isArchived    Boolean   @default(false)
+  publicToken   String?   @unique
   notes         String?
   clientId      Int
   client        Client    @relation(fields: [clientId], references: [id])

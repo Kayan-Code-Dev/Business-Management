@@ -18,6 +18,7 @@ import roleRoutes from "./routes/roles";
 import lookupRoutes from "./routes/lookups";
 import settingsRoutes from "./routes/settings";
 import invoiceRoutes from "./routes/invoices";
+import publicRoutes from "./routes/public";
 
 const app = express();
 
@@ -33,6 +34,8 @@ app.use(express.urlencoded({ extended: true }));
 if (!fs.existsSync(env.uploadDir)) fs.mkdirSync(env.uploadDir, { recursive: true });
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
+
+app.use("/api/public", publicRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/clients", clientRoutes);

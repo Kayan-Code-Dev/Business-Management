@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
@@ -6,6 +6,7 @@ import { Spinner } from "./components/ui";
 import { useSettings } from "./lib/SettingsContext";
 
 import Login from "./pages/Login";
+import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -31,10 +32,20 @@ function Guard({ module, children }: { module?: string; children: JSX.Element })
 export default function App() {
   const { user, loading } = useAuth();
   const { refresh } = useSettings();
+  const location = useLocation();
 
   useEffect(() => {
     if (user) refresh();
   }, [user]);
+
+  // بوابة العميل العامة (بدون مصادقة أو تخطيط)
+  if (location.pathname.startsWith("/p/")) {
+    return (
+      <Routes>
+        <Route path="/p/:token" element={<ClientPortal />} />
+      </Routes>
+    );
+  }
 
   if (loading) {
     return (

@@ -10,7 +10,7 @@ echo "==> Building server..."
 cd "$APP_DIR/server"
 npm install --no-audit --no-fund
 npx prisma generate
-npx prisma db push --skip-generate
+  npx prisma db push --skip-generate --accept-data-loss
 npm run build
 
 echo "==> Building client..."
