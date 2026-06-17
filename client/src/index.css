@@ -107,11 +107,27 @@ body {
   .no-print {
     display: none !important;
   }
+  html,
   body {
     background: white;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    margin: 12mm;
   }
   .card {
     box-shadow: none;
     border: 1px solid #e2e8f0;
+  }
+  .invoice-doc {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+  }
+  main {
+    padding: 0 !important;
   }
 }

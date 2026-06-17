@@ -17,6 +17,7 @@ import userRoutes from "./routes/users";
 import roleRoutes from "./routes/roles";
 import lookupRoutes from "./routes/lookups";
 import settingsRoutes from "./routes/settings";
+import invoiceRoutes from "./routes/invoices";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/lookups", lookupRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/invoices", invoiceRoutes);
 
 // تقديم واجهة الإنتاج إن وُجدت
 const clientDist = path.resolve(__dirname, "../../client/dist");

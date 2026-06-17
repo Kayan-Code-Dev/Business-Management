@@ -31,6 +31,7 @@ model User {
   expenses     Expense[]
   files        FileAttachment[]
   notes        Note[]
+  invoices     Invoice[]
 }
 
 // الأدوار والصلاحيات
@@ -59,6 +60,7 @@ model Client {
 
   projects       Project[]
   payments       Payment[]
+  invoices       Invoice[]
 }
 
 // المختصون
@@ -105,6 +107,43 @@ model Project {
   files         FileAttachment[]
   projectNotes  Note[]
   expenses      Expense[]
+  invoices      Invoice[]
+}
+
+// الفواتير
+model Invoice {
+  id            Int       @id @default(autoincrement())
+  invoiceNumber String    @unique
+  clientId      Int
+  client        Client    @relation(fields: [clientId], references: [id])
+  projectId     Int?
+  project       Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  issueDate     DateTime  @default(now())
+  dueDate       DateTime?
+  status        String    @default("draft") // draft | sent | paid | cancelled
+  currency      String    @default("ر.س")
+  notes         String?
+  discount      Float     @default(0)
+  taxRate       Float     @default(0)
+  subtotal      Float     @default(0)
+  taxAmount     Float     @default(0)
+  total         Float     @default(0)
+  createdById   Int?
+  createdBy     User?     @relation(fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  items         InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float   @default(0)
+  amount      Float   @default(0)
+  sortOrder   Int     @default(0)
 }
 
 // ربط المشروع بالمختص

@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, apiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { PageHeader, Card, Spinner, Field, Modal, Badge } from "../components/ui";
+import { Icon } from "../components/Icon";
 import { clearLookupCache } from "../lib/useLookups";
+import { useSettings } from "../lib/SettingsContext";
+import { useToast } from "../lib/toast";
 
 const CATEGORIES = [
   { key: "service_type", label: "أنواع الخدمات" },
@@ -15,29 +18,49 @@ const CATEGORIES = [
 
 export default function Settings() {
   const { flag } = useAuth();
+  const { refresh } = useSettings();
+  const { notify } = useToast();
   const [settings, setSettings] = useState<any>(null);
   const [lookups, setLookups] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
   const [addCat, setAddCat] = useState<string | null>(null);
+  const logoInput = useRef<HTMLInputElement>(null);
 
   const loadLookups = () => api.get("/lookups").then((r) => setLookups(r.data));
   useEffect(() => {
-    api.get("/settings").then((r) => setSettings(r.data));
+    api.get("/settings").then((r) =>
+      setSettings({
+        org: { name: "", phone: "", email: "", address: "", logo: "", currency: "ر.س", taxNumber: "", ...(r.data.org || {}) },
+        notifications: r.data.notifications || {},
+        invoice: { defaultTaxRate: 0, terms: "", ...(r.data.invoice || {}) },
+      })
+    );
     loadLookups();
   }, []);
 
   if (!settings) return <Spinner />;
 
+  const onLogo = (file: File | null) => {
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) {
+      notify("حجم الشعار كبير (الحد 1.5 ميجابايت)", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setSettings((s: any) => ({ ...s, org: { ...s.org, logo: reader.result as string } }));
+    reader.readAsDataURL(file);
+  };
+
   const saveOrg = async () => {
     setSaving(true);
-    setMsg("");
     try {
       await api.put("/settings/org", { value: settings.org });
       await api.put("/settings/notifications", { value: settings.notifications });
-      setMsg("تم حفظ الإعدادات");
+      await api.put("/settings/invoice", { value: settings.invoice });
+      await refresh();
+      notify("تم حفظ الإعدادات وتطبيقها على النظام");
     } catch (e) {
-      setMsg(apiError(e));
+      notify(apiError(e), "error");
     } finally {
       setSaving(false);
     }
@@ -64,16 +87,57 @@ export default function Settings() {
     <div>
       <PageHeader title="الإعدادات" subtitle="إعدادات المؤسسة والقوائم والنظام" icon="settings" />
 
-      {msg && <div className="mb-4 rounded-lg bg-green-50 text-green-700 text-sm px-3 py-2">{msg}</div>}
-
       <Card className="mb-4">
-        <h3 className="font-bold text-slate-800 mb-3">إعدادات المؤسسة</h3>
+        <h3 className="font-bold text-ink-800 mb-4">إعدادات المؤسسة</h3>
+
+        {/* Logo */}
+        <div className="flex items-center gap-4 mb-5 pb-5 border-b border-ink-100">
+          <div className="h-20 w-20 rounded-2xl border-2 border-dashed border-ink-200 bg-ink-50 flex items-center justify-center overflow-hidden shrink-0">
+            {settings.org.logo ? (
+              <img src={settings.org.logo} alt="logo" className="h-full w-full object-contain" />
+            ) : (
+              <Icon name="building" size={28} className="text-ink-300" />
+            )}
+          </div>
+          <div>
+            <div className="font-semibold text-ink-700 mb-1">شعار الشركة</div>
+            <p className="text-xs text-ink-400 mb-2">يظهر في القائمة الجانبية وعلى الفواتير (PNG/JPG حتى 1.5MB)</p>
+            <div className="flex gap-2">
+              <input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={(e) => onLogo(e.target.files?.[0] || null)} />
+              <button className="btn-secondary btn-sm" onClick={() => logoInput.current?.click()}>
+                <Icon name="upload" size={15} /> رفع شعار
+              </button>
+              {settings.org.logo && (
+                <button className="btn-ghost btn-sm text-red-500" onClick={() => setSettings({ ...settings, org: { ...settings.org, logo: "" } })}>
+                  إزالة
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-4">
           <Field label="اسم المؤسسة"><input className="input" value={settings.org.name || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, name: e.target.value } })} /></Field>
-          <Field label="العملة"><input className="input" value={settings.org.currency || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, currency: e.target.value } })} /></Field>
+          <Field label="العملة" hint="مثال: ر.س، $، د.أ"><input className="input" value={settings.org.currency || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, currency: e.target.value } })} /></Field>
           <Field label="الهاتف"><input className="input" value={settings.org.phone || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, phone: e.target.value } })} /></Field>
           <Field label="البريد"><input className="input" value={settings.org.email || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, email: e.target.value } })} /></Field>
-          <div className="md:col-span-2"><Field label="العنوان"><input className="input" value={settings.org.address || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, address: e.target.value } })} /></Field></div>
+          <Field label="الرقم الضريبي"><input className="input" value={settings.org.taxNumber || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, taxNumber: e.target.value } })} /></Field>
+          <Field label="العنوان"><input className="input" value={settings.org.address || ""} onChange={(e) => setSettings({ ...settings, org: { ...settings.org, address: e.target.value } })} /></Field>
+        </div>
+
+        {/* Invoice settings */}
+        <div className="mt-5 pt-5 border-t border-ink-100">
+          <h4 className="font-semibold text-ink-700 mb-3">إعدادات الفاتورة</h4>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Field label="نسبة الضريبة الافتراضية (%)">
+              <input type="number" className="input" value={settings.invoice.defaultTaxRate ?? 0} onChange={(e) => setSettings({ ...settings, invoice: { ...settings.invoice, defaultTaxRate: Number(e.target.value) } })} />
+            </Field>
+            <div className="md:col-span-2">
+              <Field label="الشروط / ملاحظات الفاتورة">
+                <textarea className="input" rows={2} value={settings.invoice.terms || ""} onChange={(e) => setSettings({ ...settings, invoice: { ...settings.invoice, terms: e.target.value } })} placeholder="مثال: تُدفع الفاتورة خلال 15 يوماً من تاريخ الإصدار" />
+              </Field>
+            </div>
+          </div>
         </div>
         <div className="mt-4">
           <h4 className="font-medium text-slate-700 mb-2">الإشعارات</h4>

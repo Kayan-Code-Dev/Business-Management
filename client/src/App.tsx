@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { Spinner } from "./components/ui";
-import { api } from "./api/client";
-import { setCurrency } from "./lib/format";
+import { useSettings } from "./lib/SettingsContext";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -15,6 +14,8 @@ import ClientDetail from "./pages/ClientDetail";
 import Specialists from "./pages/Specialists";
 import SpecialistDetail from "./pages/SpecialistDetail";
 import Financial from "./pages/Financial";
+import Invoices from "./pages/Invoices";
+import InvoiceView from "./pages/InvoiceView";
 import Reports from "./pages/Reports";
 import Activity from "./pages/Activity";
 import Users from "./pages/Users";
@@ -29,13 +30,10 @@ function Guard({ module, children }: { module?: string; children: JSX.Element })
 
 export default function App() {
   const { user, loading } = useAuth();
+  const { refresh } = useSettings();
 
   useEffect(() => {
-    if (user) {
-      api.get("/settings").then((res) => {
-        if (res.data?.org?.currency) setCurrency(res.data.org.currency);
-      }).catch(() => {});
-    }
+    if (user) refresh();
   }, [user]);
 
   if (loading) {
@@ -67,6 +65,8 @@ export default function App() {
         <Route path="/specialists" element={<Guard module="specialists"><Specialists /></Guard>} />
         <Route path="/specialists/:id" element={<Guard module="specialists"><SpecialistDetail /></Guard>} />
         <Route path="/financial" element={<Guard module="financial"><Financial /></Guard>} />
+        <Route path="/invoices" element={<Guard module="financial"><Invoices /></Guard>} />
+        <Route path="/invoices/:id" element={<Guard module="financial"><InvoiceView /></Guard>} />
         <Route path="/reports" element={<Guard module="reports"><Reports /></Guard>} />
         <Route path="/activity" element={<Guard><Activity /></Guard>} />
         <Route path="/users" element={<Guard module="users"><Users /></Guard>} />

@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { api } from "../api/client";
+import { useSettings } from "../lib/SettingsContext";
 import { Icon, IconName } from "./Icon";
 
 interface NavItem {
@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { to: "/clients", label: "العملاء", icon: "clients", module: "clients" },
   { to: "/specialists", label: "المختصون", icon: "specialists", module: "specialists" },
   { to: "/financial", label: "المالية", icon: "financial", module: "financial" },
+  { to: "/invoices", label: "الفواتير", icon: "file", module: "financial" },
   { to: "/reports", label: "التقارير", icon: "reports", module: "reports" },
 ];
 
@@ -27,13 +28,10 @@ const ADMIN_NAV: NavItem[] = [
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout, can } = useAuth();
+  const { org } = useSettings();
   const [open, setOpen] = useState(false);
-  const [org, setOrg] = useState<any>(null);
   const location = useLocation();
 
-  useEffect(() => {
-    api.get("/settings").then((r) => setOrg(r.data?.org)).catch(() => {});
-  }, []);
   useEffect(() => setOpen(false), [location.pathname]);
 
   const mainItems = NAV.filter((n) => !n.module || can(n.module, "view"));
@@ -73,8 +71,12 @@ export function Layout({ children }: { children: ReactNode }) {
         }`}
       >
         <div className="h-16 flex items-center gap-3 px-5 border-b border-white/10">
-          <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center ring-1 ring-white/20">
-            <Icon name="briefcase" size={22} className="text-brand-200" />
+          <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center ring-1 ring-white/20 overflow-hidden shrink-0">
+            {org?.logo ? (
+              <img src={org.logo} alt="logo" className="h-full w-full object-contain" />
+            ) : (
+              <Icon name="briefcase" size={22} className="text-brand-200" />
+            )}
           </div>
           <div className="min-w-0">
             <div className="font-bold text-[15px] leading-tight truncate">{org?.name || "إدارة المشاريع"}</div>
