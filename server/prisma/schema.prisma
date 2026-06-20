@@ -30,7 +30,9 @@ model User {
   payments     Payment[]
   expenses     Expense[]
   files        FileAttachment[]
+  clientFiles  ClientAttachment[]
   notes        Note[]
+  clientNotes  ClientNote[]
   projectTasks ProjectTask[]
   deliveries   ProjectDelivery[]
   projectChats ProjectMessage[]
@@ -58,7 +60,12 @@ model Client {
   id             Int       @id @default(autoincrement())
   name           String
   phone          String?
+  email          String?
   country        String?
+  university     String?
+  academicDegree String?
+  source         String?
+  status         String    @default("active") // active | potential | inactive
   specialization String?
   notes          String?
   createdAt      DateTime  @default(now())
@@ -67,6 +74,8 @@ model Client {
   projects       Project[]
   payments       Payment[]
   invoices       Invoice[]
+  attachments    ClientAttachment[]
+  clientNotes    ClientNote[]
 }
 
 // المختصون
@@ -290,6 +299,32 @@ model ProjectMessage {
   authorId  Int?
   author    User?    @relation(fields: [authorId], references: [id])
   body      String
+  createdAt DateTime @default(now())
+}
+
+// ملفات عامة مرتبطة بالعميل
+model ClientAttachment {
+  id           Int      @id @default(autoincrement())
+  clientId     Int
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String
+  originalName String
+  storedName   String
+  mimeType     String?
+  size         Int      @default(0)
+  uploadedById Int?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+// ملاحظات داخلية على العميل
+model ClientNote {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  text      String
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
 }
 

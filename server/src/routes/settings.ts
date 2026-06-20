@@ -69,6 +69,8 @@ router.get(
       invoices: await prisma.invoice.findMany({ include: { items: true } }),
       notes: await prisma.note.findMany(),
       files: await prisma.fileAttachment.findMany(),
+      clientFiles: await prisma.clientAttachment.findMany(),
+      clientNotes: await prisma.clientNote.findMany(),
       tasks: await prisma.projectTask.findMany(),
       deliveries: await prisma.projectDelivery.findMany(),
       messages: await prisma.projectMessage.findMany(),
