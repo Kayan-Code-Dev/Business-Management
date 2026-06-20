@@ -31,6 +31,9 @@ model User {
   expenses     Expense[]
   files        FileAttachment[]
   notes        Note[]
+  projectTasks ProjectTask[]
+  deliveries   ProjectDelivery[]
+  projectChats ProjectMessage[]
   invoices     Invoice[]
   leads        Lead[]
   leadNotes    LeadNote[]
@@ -83,6 +86,9 @@ model Specialist {
 
   projectLinks    ProjectSpecialist[]
   payments        Payment[]
+  assignedTasks   ProjectTask[]
+  deliveries      ProjectDelivery[]
+  assignedNotes   Note[]
   user            User?
 }
 
@@ -92,6 +98,9 @@ model Project {
   projectNumber String    @unique
   title         String
   serviceType   String?
+  priority      String    @default("medium") // low | medium | high | urgent
+  clientSource  String?
+  description   String?
   status        String    @default("new")
   progress      Int       @default(0)
   value         Float     @default(0) // قيمة المشروع (المتفق عليه مع العميل)
@@ -110,6 +119,9 @@ model Project {
   payments      Payment[]
   files         FileAttachment[]
   projectNotes  Note[]
+  tasks         ProjectTask[]
+  deliveries    ProjectDelivery[]
+  messages      ProjectMessage[]
   expenses      Expense[]
   invoices      Invoice[]
 }
@@ -220,10 +232,64 @@ model Note {
   id        Int      @id @default(autoincrement())
   projectId Int
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  noteNumber Int     @default(1)
   text      String
   type      String   @default("general") // general | edit | internal
+  status    String   @default("new") // new | in_progress | done | closed
+  assigneeSpecialistId Int?
+  assigneeSpecialist Specialist? @relation(fields: [assigneeSpecialistId], references: [id])
   authorId  Int?
   author    User?    @relation(fields: [authorId], references: [id])
+  closedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// مهام المشروع
+model ProjectTask {
+  id           Int        @id @default(autoincrement())
+  projectId    Int
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  specialistId Int?
+  specialist   Specialist? @relation(fields: [specialistId], references: [id])
+  deliveryDate DateTime?
+  status       String     @default("new") // new | in_progress | waiting_client | review | completed | closed
+  progress     Int        @default(0)
+  createdById  Int?
+  createdBy    User?      @relation(fields: [createdById], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+// تسليمات المشروع (مستقلة عن ملفات المشروع العامة)
+model ProjectDelivery {
+  id           Int        @id @default(autoincrement())
+  projectId    Int
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  specialistId Int?
+  specialist   Specialist? @relation(fields: [specialistId], references: [id])
+  fileName     String
+  originalName String
+  storedName   String
+  mimeType     String?
+  size         Int        @default(0)
+  note         String?
+  deliveredAt  DateTime   @default(now())
+  uploadedById Int?
+  uploadedBy   User?      @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime   @default(now())
+}
+
+// محادثات داخلية للمشروع
+model ProjectMessage {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+  body      String
   createdAt DateTime @default(now())
 }
 

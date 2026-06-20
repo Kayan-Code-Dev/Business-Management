@@ -15,11 +15,11 @@ export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 export const STATUS_LABELS_AR: Record<string, string> = {
   new: "جديد",
-  specialist_assigned: "تم تعيين المختص",
+  specialist_assigned: "تم تعيين مختص",
   in_progress: "قيد التنفيذ",
-  first_delivery: "تم التسليم الأول",
-  revisions: "تعديلات",
-  final_delivery: "التسليم النهائي",
+  first_delivery: "بانتظار العميل",
+  revisions: "مراجعة",
+  final_delivery: "بانتظار العميل",
   completed: "مكتمل",
   cancelled: "ملغي",
   late: "متأخر",

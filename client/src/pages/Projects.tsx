@@ -245,7 +245,10 @@ function TableView({ projects, flag, canEdit, onEdit, onArchive, archived }: any
               <th>العميل</th>
               <th>المختصون</th>
               <th>الحالة</th>
+              <th>تاريخ الإنشاء</th>
               <th>التسليم</th>
+              <th>الملاحظات</th>
+              <th>الملفات</th>
               <th>التقدّم</th>
               <th>القيمة</th>
               <th>المتبقي</th>
@@ -263,7 +266,14 @@ function TableView({ projects, flag, canEdit, onEdit, onArchive, archived }: any
                 <td>{p.client?.name}</td>
                 <td className="text-xs text-ink-500">{p.specialists?.map((s: any) => s.name).join("، ") || "—"}</td>
                 <td><StatusBadge status={p.status} isLate={p.isLate} /></td>
+                <td className="text-sm whitespace-nowrap">{formatDate(p.createdAt)}</td>
                 <td className="text-sm whitespace-nowrap">{formatDate(p.deliveryDate)}</td>
+                <td>
+                  <span className="badge bg-amber-50 text-amber-700">{p.notesCount || 0}</span>
+                </td>
+                <td>
+                  <span className="badge bg-blue-50 text-blue-700">{p.filesCount || 0}</span>
+                </td>
                 <td>
                   <div className="flex items-center gap-2">
                     <Progress value={p.progress} />
@@ -368,20 +378,38 @@ function ProjectModal({ mode, project, clients, serviceTypes, onClose, onSaved }
     projectNumber: project?.projectNumber || "",
     clientId: project?.client?.id || "",
     serviceType: project?.serviceType || "",
+    priority: project?.priority || "medium",
+    clientSource: project?.clientSource || "",
+    description: project?.description || "",
     value: project?.value ?? "",
     deliveryDate: project?.deliveryDate ? String(project.deliveryDate).slice(0, 10) : "",
     progress: project?.progress ?? 0,
     notes: project?.notes || "",
   });
+  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const uploadInitialFiles = async (projectId: number) => {
+    for (const f of files) {
+      const fd = new FormData();
+      fd.append("file", f);
+      fd.append("name", f.name);
+      fd.append("category", "general");
+      await api.post(`/projects/${projectId}/files`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    }
+  };
 
   const submit = async () => {
     setError("");
     setSaving(true);
     try {
-      if (mode === "edit") await api.put(`/projects/${project.id}`, form);
-      else await api.post("/projects", form);
+      if (mode === "edit") {
+        await api.put(`/projects/${project.id}`, form);
+      } else {
+        const res = await api.post("/projects", form);
+        if (files.length > 0) await uploadInitialFiles(res.data.id);
+      }
       onSaved();
     } catch (err) {
       setError(apiError(err));
@@ -416,6 +444,25 @@ function ProjectModal({ mode, project, clients, serviceTypes, onClose, onSaved }
             {serviceTypes.map((s: any) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </Field>
+        <Field label="الأولوية">
+          <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+            <option value="low">منخفضة</option>
+            <option value="medium">متوسطة</option>
+            <option value="high">عالية</option>
+            <option value="urgent">عاجلة</option>
+          </select>
+        </Field>
+        <Field label="مصدر العميل">
+          <select className="input" value={form.clientSource} onChange={(e) => setForm({ ...form, clientSource: e.target.value })}>
+            <option value="">اختر المصدر</option>
+            <option value="facebook">فيسبوك</option>
+            <option value="instagram">إنستغرام</option>
+            <option value="whatsapp">واتساب</option>
+            <option value="website">موقع إلكتروني</option>
+            <option value="referral">توصية</option>
+            <option value="other">أخرى</option>
+          </select>
+        </Field>
         <Field label="قيمة المشروع">
           <input type="number" className="input" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} />
         </Field>
@@ -428,10 +475,28 @@ function ProjectModal({ mode, project, clients, serviceTypes, onClose, onSaved }
           </Field>
         )}
         <div className="md:col-span-2">
+          <Field label="وصف المشروع">
+            <textarea className="input" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </Field>
+        </div>
+        <div className="md:col-span-2">
           <Field label="ملاحظات">
             <textarea className="input" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </Field>
         </div>
+        {mode === "create" && (
+          <div className="md:col-span-2">
+            <Field label="رفع ملفات المشروع الأساسية">
+              <input
+                type="file"
+                className="input"
+                multiple
+                onChange={(e) => setFiles(Array.from(e.target.files || []))}
+              />
+            </Field>
+            {files.length > 0 && <p className="text-xs text-ink-500 mt-1">سيتم رفع {files.length} ملف بعد إنشاء المشروع.</p>}
+          </div>
+        )}
       </div>
       <div className="flex justify-end gap-2 mt-6">
         <button className="btn-secondary" onClick={onClose}>إلغاء</button>
